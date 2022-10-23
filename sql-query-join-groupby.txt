@@ -1,0 +1,125 @@
+----------------------------------------------------------------------------------------------------
+################################### ----- INNER JOIN ------ #########################################
+----------------------------------------------------------------------------------------------------
+
+
+1. Selezionare tutti gli studenti iscritti al Corso di Laurea in Economia
+
+SELECT * 
+FROM students 
+INNER JOIN degrees 
+ON students.degree_id = degrees.id 
+WHERE degrees.name = 'Corso di Laurea in Economia';
+
+2. Selezionare tutti i Corsi di Laurea Magistrale del Dipartimento di Neuroscienze
+
+SELECT *
+FROM degrees
+INNER JOIN departments
+ON department_id = departments.id
+WHERE
+departments.name = "Dipartimento di Neuroscienze" AND degrees.level = "Magistrale";
+
+3. Selezionare tutti i corsi in cui insegna Fulvio Amato (id=44) 
+
+SELECT *
+FROM courses
+INNER JOIN course_teacher
+ON courses.id = course_teacher.course_id
+INNER JOIN teachers
+ON course_teacher.teacher_id = teachers.id
+WHERE teachers.name = 'Fulvio' AND teachers.surname = 'Amato'
+;
+
+4. Selezionare tutti gli studenti con i dati relativi al corso di laurea a cui sono iscritti e il
+   relativo dipartimento, in ordine alfabetico per cognome e nome
+
+SELECT students.name, students.surname, students.degree_id, degrees.*, departments.name AS Department
+FROM students
+INNER JOIN degrees
+ON students.degree_id = degrees.id
+INNER JOIN departments
+ON degrees.department_id = departments.id
+ORDER BY students.name, students.surname ASC;
+;
+
+
+5. Selezionare tutti i corsi di laurea con i relativi corsi e insegnanti
+
+SELECT degrees.name, degrees.level, degrees.address, 
+courses.name, courses.description, courses.period, courses.year, courses.cfu, 
+teachers.name, teachers.surname, teachers.email, teachers.office_number
+FROM degrees
+INNER JOIN courses
+ON degrees.id = courses.degree_id
+INNER JOIN course_teacher
+ON courses.id = course_teacher.course_id
+INNER JOIN teachers
+ON course_teacher.teacher_id = teachers.id
+;
+
+
+6. Selezionare tutti i docenti che insegnano nel Dipartimento di Matematica (54)
+
+SELECT teachers.*, departments.name
+FROM teachers
+INNER JOIN course_teacher
+ON teachers.id =course_teacher.teacher_id
+INNER JOIN courses
+ON course_teacher.course_id = courses.id
+INNER JOIN degrees
+ON courses.degree_id = degrees.id
+INNER JOIN departments
+ON degrees.id = departments.id
+WHERE 
+departments.name = "Dipartimento di Matematica";
+
+7. BONUS: Selezionare per ogni studente quanti tentativi d’esame ha sostenuto per
+   superare ciascuno dei suoi esami
+
+SELECT S.`name`, S.`surname`, IF(COUNT(C.`name`)>1, concat(count(C.name),' tentativi'), '1 tentativo') AS 'Tentativi', C.`name` AS 'Nome Corso'
+FROM `students` S
+JOIN `exam_student` ES
+ON S.`id` = ES.`student_id`
+JOIN `exams` E
+ON E.`id` = ES.`exam_id`
+JOIN `courses` C
+ON C.`id` = E.`course_id`
+GROUP BY S.`name`, S.`surname`, C.`name`;
+
+----------------------------------------------------------------------------------------------------
+################################### ----- GROUP BY ------ #########################################
+----------------------------------------------------------------------------------------------------
+
+1. Contare quanti iscritti ci sono stati ogni anno
+
+SELECT YEAR(s.enrolment_date) as anno, COUNT(s.id) as numero_studenti_per_anno
+FROM students AS s 
+GROUP BY YEAR(s.enrolment_date);
+
+2. Contare gli insegnanti che hanno l'ufficio nello stesso edificio
+
+SELECT teachers.office_address AS indirizzo_ufficio, COUNT(teachers.id) as numero_insegnanti 
+FROM teachers 
+GROUP BY teachers.office_address
+;
+
+3. Calcolare la media dei voti di ogni appello d'esame
+
+SELECT courses.name as course, es.exam_id, AVG(es.vote) as vote_average 
+FROM exam_student as es 
+INNER JOIN exams 
+ON es.exam_id = exams.id 
+INNER JOIN courses 
+ON exams.course_id = courses.id 
+GROUP BY courses.name, es.exam_id
+;
+
+4. Contare quanti corsi di laurea ci sono per ogni dipartimento
+
+SELECT departments.name, COUNT(deg.id) as numero_corsi_di_laurea
+FROM degrees as deg 
+INNER JOIN departments 
+ON deg.department_id = departments.id 
+GROUP BY deg.department_id
+;
